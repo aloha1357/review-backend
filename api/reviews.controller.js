@@ -1,89 +1,110 @@
 import ReviewsDAO from "../dao/reviewsDAO.js"
+import mongodb from "mongodb";
+const ObjectId = mongodb.ObjectID;
 
 export default class ReviewsController {
-  static async apiPostReview(req, res, next) {
-    try {
-      const movieId = parseInt(req.body.movieId)
-      const review = req.body.review
-      const user = req.body.user
-      console.log('movieid', movieId)
-      const reviewResponse = await ReviewsDAO.addReview(
-        movieId,
-        user,
-        review
-      )
-      res.json({ status: "success" })
-    } catch (e) {
-      res.status(500).json({ error: e.message })
+    static async apiPostReview(req, res, next) {
+        try {
+            const movieId = req.body.movieId;
+            if (!ObjectId.isValid(movieId)) {
+                res.status(400).json({ error: "Invalid movieId format" });
+                return;
+            }
+
+            const review = req.body.review;
+            const user = {
+                id: req.user._id, // 从经过身份验证的用户信息中获取用户ID
+                name: req.user.username // 从经过身份验证的用户信息中获取用户名
+            };
+
+            const reviewResponse = await ReviewsDAO.addReview(
+                new ObjectId(movieId),
+                user,
+                review
+            );
+            res.json({ status: "success", reviewId: reviewResponse.insertedId });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
     }
-  }
 
-  static async apiGetReview(req, res, next) {
-    try {
-      let id = req.params.id || {}
-      let review = await ReviewsDAO.getReview(id)
-      if (!review) {
-        res.status(404).json({ error: "Not found" })
-        return
-      }
-      res.json(review)
-    } catch (e) {
-      console.log(`api, ${e}`)
-      res.status(500).json({ error: e })
+    static async apiGetReview(req, res, next) {
+        try {
+            const id = req.params.id;
+            if (!ObjectId.isValid(id)) {
+                res.status(400).json({ error: "Invalid reviewId format" });
+                return;
+            }
+            let review = await ReviewsDAO.getReview(new ObjectId(id));
+            if (!review) {
+                res.status(404).json({ error: "Not found" });
+                return;
+            }
+            res.json(review);
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
     }
-  }
 
-  static async apiUpdateReview(req, res, next) {
-    try {
-      const reviewId = req.params.id
-      const review = req.body.review
-      const user = req.body.user
+    static async apiUpdateReview(req, res, next) {
+        try {
+            const reviewId = req.params.id;
+            const review = req.body.review;
 
-      const reviewResponse = await ReviewsDAO.updateReview(
-        reviewId,
-        user,
-        review
-      )
+            if (!ObjectId.isValid(reviewId)) {
+                res.status(400).json({ error: "Invalid reviewId format" });
+                return;
+            }
 
-      var { error } = reviewResponse
-      if (error) {
-        res.status(400).json({ error })
-      }
+            const user = {
+                id: req.user._id, // 从经过身份验证的用户信息中获取用户ID
+                name: req.user.username // 从经过身份验证的用户信息中获取用户名
+            };
 
-      if (reviewResponse.modifiedCount === 0) {
-        throw new Error(
-          "unable to update review",
-        )
-      }
+            const reviewResponse = await ReviewsDAO.updateReview(
+                new ObjectId(reviewId),
+                user,
+                review
+            );
 
-      res.json({ status: "success" })
-    } catch (e) {
-      res.status(500).json({ error: e.message })
+            if (reviewResponse.modifiedCount === 0) {
+                throw new Error("unable to update review - no changes made");
+            }
+
+            res.json({ status: "success" });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
     }
-  }
 
-  static async apiDeleteReview(req, res, next) {
-    try {
-      const reviewId = req.params.id
-      const reviewResponse = await ReviewsDAO.deleteReview(reviewId)
-      res.json({ status: "success" })
-    } catch (e) {
-      res.status(500).json({ error: e.message })
+    static async apiDeleteReview(req, res, next) {
+        try {
+            const reviewId = req.params.id;
+            if (!ObjectId.isValid(reviewId)) {
+                res.status(400).json({ error: "Invalid reviewId format" });
+                return;
+            }
+            const reviewResponse = await ReviewsDAO.deleteReview(new ObjectId(reviewId));
+            if (reviewResponse.deletedCount === 0) {
+                throw new Error("unable to delete review - no review found");
+            }
+            res.json({ status: "success" });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
     }
-  }
 
-  static async apiGetReviews(req, res, next) {
-    try {
-      let id = req.params.id || {}
-      let reviews = await ReviewsDAO.getReviewsByMovieId(id)
-      if (!reviews) {
-        res.status(404).json({ error: "Not found" })
-        return
-      }
-      res.json(reviews)
-    } catch (e) {
-      console.log(`api, ${e}`)
-      res.status(500).json({ error: e })
+    static async apiGetReviews(req, res, next) {
+        try {
+            const movieId = req.params.id;
+            if (!ObjectId.isValid(movieId)) {
+                res.status(400).json({ error: "Invalid movieId format" });
+                return;
+            }
+            let reviews = await ReviewsDAO.getReviewsByMovieId(new ObjectId(movieId));
+            res.json(reviews);
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
     }
-  }
 }
