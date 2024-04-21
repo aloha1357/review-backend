@@ -5,7 +5,7 @@ import UsersCtrl from "./users.controller.js";
 import auth from "./authMiddleware.js";
 
 const router = express.Router();
-
+router.route("/").get((req, res) => res.send("Fuck you"));
 // 评论相关的路由
 router.route("/movie/:id").get(ReviewsCtrl.apiGetReviews);
 router.route("/new").post(auth, ReviewsCtrl.apiPostReview);

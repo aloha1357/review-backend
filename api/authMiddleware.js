@@ -1,6 +1,6 @@
 // authMiddleware.js
 import jwt from 'jsonwebtoken';
-import UsersDAO from './dao/usersDAO.js';
+import UsersDAO from '../dao/UsersDAO.js';
 
 const auth = async(req, res, next) => {
     try {
