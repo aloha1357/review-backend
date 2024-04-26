@@ -1,8 +1,8 @@
 # 使用官方 Node.js 镜像
-FROM node:14
+FROM node:20.5.0
 
 # 如果需要特定版本的 npm，可以在这里安装
-RUN npm install -g npm@7.20.0
+RUN npm install -g npm@10.5.2
 
 # 設定工作目錄
 WORKDIR /usr/src/app
