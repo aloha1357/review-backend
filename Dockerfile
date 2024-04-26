@@ -1,5 +1,8 @@
-# 選擇一個基礎映像
+# 使用官方 Node.js 镜像
 FROM node:14
+
+# 如果需要特定版本的 npm，可以在这里安装
+RUN npm install -g npm@7.20.0
 
 # 設定工作目錄
 WORKDIR /usr/src/app
