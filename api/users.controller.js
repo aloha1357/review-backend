@@ -57,4 +57,45 @@ export default class UsersCtrl {
             res.status(500).json({ error: e.message });
         }
     }
+    static async apiDeleteUser(req, res) {
+            try {
+                const userId = req.user.id; // 假设你的身份验证中间件将用户ID存储在req.user中
+                const deleteResult = await UsersDAO.deleteUser(userId);
+                if (deleteResult.success) {
+                    res.status(200).json({ message: "User deleted successfully" });
+                } else {
+                    res.status(400).json({ error: "Failed to delete user" });
+                }
+            } catch (error) {
+                res.status(500).json({ error: error.message });
+            }
+        }
+        // 假设添加了一个方法来更新用户喜欢的电影列表
+    static async addLikedMovie(userId, movieId) {
+        try {
+            const updateResponse = await users.updateOne({ _id: new ObjectId(userId) }, { $addToSet: { likedMovies: new ObjectId(movieId) } } // 使用 $addToSet 防止重复添加同一部电影
+            );
+            return updateResponse;
+        } catch (e) {
+            console.error(`Unable to add liked movie: ${e}`);
+            throw e;
+        }
+    }
+
+    // 在UsersController中添加相应的API处理方法
+    static async apiAddLikedMovie(req, res) {
+        try {
+            const userId = req.user._id; // 从经过身份验证的用户信息中获取用户ID
+            const movieId = req.body.movieId; // 假设从请求体中获取电影ID
+            const response = await UsersDAO.addLikedMovie(userId, movieId);
+            if (response.modifiedCount === 0) {
+                res.status(404).json({ error: "User or movie not found" });
+                return;
+            }
+            res.json({ status: "success", message: "Movie added to liked list" });
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    }
+
 }

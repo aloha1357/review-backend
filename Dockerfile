@@ -23,4 +23,4 @@ EXPOSE 3000
 # ENV NODE_ENV=production
 
 # 執行應用
-CMD [ "node", "server.js" ]
+CMD [ "node", "index.js" ]

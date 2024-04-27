@@ -5,8 +5,8 @@ import UsersCtrl from "./users.controller.js";
 import auth from "./authMiddleware.js";
 
 const router = express.Router();
-router.route("/").get((req, res) => res.send("Fuck you"));
-// 评论相关的路由
+// router.route("/").get((req, res) => res.send("Fuck you"));
+// // 评论相关的路由
 router.route("/movie/:id").get(ReviewsCtrl.apiGetReviews);
 router.route("/new").post(auth, ReviewsCtrl.apiPostReview);
 router.route("/:id")
@@ -15,7 +15,10 @@ router.route("/:id")
     .delete(auth, ReviewsCtrl.apiDeleteReview);
 
 // 用户注册和登录的路由
-router.route("/users/register").post(UsersCtrl.apiRegisterUser);
+router.route("/users/register")
+    // .get((req, res) => res.send("register success"))
+    .post(UsersCtrl.apiRegisterUser);
+// 评论相关的路由
 router.route("/users/login").post(UsersCtrl.apiLoginUser);
 
 // 忘记密码和重置密码的路由
