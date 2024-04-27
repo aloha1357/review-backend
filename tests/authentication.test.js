@@ -1,26 +1,47 @@
-// tests/authenticationService.test.js
-import request from 'supertest';
-import app from "../server.js"
-import { testUsers } from './testConfig';
+import AuthenticationService from '../dao/services/AuthenticationService';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import EmailService from '../dao/services/EmailService';
 
-describe('AuthenticationService', () => {
-    it('should allow a user to login with correct credentials', async() => {
-        const { email, password } = testUsers.user1;
-        const response = await request(app)
-            .post('/api/auth/login')
-            .send({ email, password });
+jest.mock('../dao/services/EmailService', () => ({
+    sendVerificationEmail: jest.fn()
+}));
 
-        expect(response.status).toBe(200);
-        expect(response.body).toHaveProperty('token');
+jest.mock('bcryptjs', () => ({
+    hash: jest.fn().mockResolvedValue('hashed_password'),
+    compare: jest.fn().mockResolvedValue(true)
+}));
+
+jest.mock('jsonwebtoken', () => ({
+    sign: jest.fn(() => 'jwt_token')
+}));
+
+describe('Authentication Service Tests', () => {
+    beforeAll(() => {
+        // Mock database connection and methods
+        AuthenticationService.users = {
+            createIndex: jest.fn(),
+            insertOne: jest.fn().mockResolvedValue({ insertedId: '1', ops: [{ _id: '1', username: 'testuser', email: 'test@example.com' }] }),
+            findOne: jest.fn().mockResolvedValue({ _id: '1', username: 'testuser', email: 'test@example.com', password: 'hashed_password' })
+        };
     });
 
     it('should register a user successfully', async() => {
-        const { email, password, username } = testUsers.user2;
-        const response = await request(app)
-            .post('/api/auth/register')
-            .send({ email, password, username });
+        const userData = { username: 'testuser', email: 'test@example.com', password: 'password123' };
+        const result = await AuthenticationService.registerUser(userData);
+        expect(result).toHaveProperty('insertedId', '1');
+        expect(EmailService.sendVerificationEmail).toHaveBeenCalledWith('test@example.com', expect.any(String));
+    });
 
-        expect(response.status).toBe(201);
-        expect(response.body).toHaveProperty('id');
+    it('should login a user successfully', async() => {
+        const loginData = { email: 'test@example.com', password: 'password123' };
+        const result = await AuthenticationService.loginUser(loginData);
+        expect(result).toHaveProperty('token');
+        expect(bcrypt.compare).toHaveBeenCalledWith('password123', 'hashed_password');
+        expect(jwt.sign).toHaveBeenCalledWith({ id: '1' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 });

@@ -1,20 +1,42 @@
-// tests/userLikes.test.js
 import UserLikesService from '../dao/services/UserLikesService';
-import { testUsers } from './testConfig';
+import { ObjectId } from 'mongodb';
 
-describe('UserLikesService', () => {
-    it('should add and remove a movie to/from user likes', async() => {
-        const userId = 'some-user-id';
-        const movieId = 'some-movie-id';
+jest.mock('mongodb', () => ({
+    ObjectId: jest.fn().mockImplementation(id => ({ _id: id }))
+}));
 
-        // Add like
-        await UserLikesService.addLikedMovie(userId, movieId);
-        let likes = await UserLikesService.getLikedMovies(userId);
-        expect(likes).toContain(movieId);
+describe('User Likes Service Tests', () => {
+    beforeAll(() => {
+        UserLikesService.users = {
+            updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+            findOne: jest.fn().mockResolvedValue({ likedMovies: ['movieId1', 'movieId2'] })
+        };
+    });
 
-        // Remove like
-        await UserLikesService.removeLikedMovie(userId, movieId);
-        likes = await UserLikesService.getLikedMovies(userId);
-        expect(likes).not.toContain(movieId);
+    it('should add a movie to liked list', async() => {
+        const userId = '507f191e810c19729de860ea';
+        const movieId = '507f1f77bcf86cd799439011';
+        const result = await UserLikesService.addLikedMovie(userId, movieId);
+        expect(result.modifiedCount).toBe(1);
+        expect(UserLikesService.users.updateOne).toHaveBeenCalledWith({ _id: { _id: userId } }, { $addToSet: { likedMovies: { _id: movieId } } });
+    });
+
+    it('should remove a movie from liked list', async() => {
+        const userId = '507f191e810c19729de860ea';
+        const movieId = '507f1f77bcf86cd799439011';
+        const result = await UserLikesService.removeLikedMovie(userId, movieId);
+        expect(result.modifiedCount).toBe(1);
+        expect(UserLikesService.users.updateOne).toHaveBeenCalledWith({ _id: { _id: userId } }, { $pull: { likedMovies: { _id: movieId } } });
+    });
+
+    it('should get liked movies', async() => {
+        const userId = '507f191e810c19729de860ea';
+        const result = await UserLikesService.getLikedMovies(userId);
+        expect(result).toEqual(['movieId1', 'movieId2']);
+        expect(UserLikesService.users.findOne).toHaveBeenCalledWith({ _id: { _id: userId } });
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 });
