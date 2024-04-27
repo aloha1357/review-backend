@@ -1,6 +1,6 @@
 import ReviewsDAO from "../dao/reviewsDAO.js"
 import mongodb from "mongodb";
-const ObjectId = mongodb.ObjectID;
+import { ObjectId } from 'mongodb';
 
 export default class ReviewsController {
     static async apiPostReview(req, res, next) {

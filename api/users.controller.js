@@ -2,10 +2,12 @@
 import UsersDAO from "../dao/UsersDAO.js";
 
 export default class UsersCtrl {
+
     static async apiRegisterUser(req, res, next) {
         try {
             const { username, email, password } = req.body;
-            const registerResponse = await UsersDAO.registerUser(username, email, password);
+            const userData = { username, email, password };
+            const registerResponse = await UsersDAO.registerUser(userData);
             if (registerResponse.error) {
                 res.status(500).json({ error: registerResponse.error });
                 return;
@@ -16,10 +18,12 @@ export default class UsersCtrl {
         }
     }
 
+
     static async apiLoginUser(req, res, next) {
         try {
             const { email, password } = req.body;
-            const loginResponse = await UsersDAO.loginUser(email, password);
+            const userData = { email, password };
+            const loginResponse = await UsersDAO.loginUser(userData);
             if (loginResponse.error) {
                 res.status(500).json({ error: loginResponse.error });
                 return;

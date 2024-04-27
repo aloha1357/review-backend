@@ -1,7 +1,5 @@
-import mongodb from "mongodb"
-const ObjectId = mongodb.ObjectID
-
-let reviews
+import mongodb from 'mongodb';
+import { ObjectId } from 'mongodb';
 
 export default class ReviewsDAO {
     static async injectDB(conn) {
