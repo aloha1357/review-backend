@@ -87,4 +87,3 @@ npm test
 ## 許可證
 
 本專案採用 [MIT license](LICENSE.md) 許可。
-```
